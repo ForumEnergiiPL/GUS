@@ -18,30 +18,39 @@ OUT.mkdir(exist_ok=True)
 
 MASTER_FILE = OUT / "gus_gas_TJ_2018_plus_IMPORT_EXPORT_MASTER.xlsx"
 
+# OPCJA 1: klucz w kodzie
+# Wklej swój klucz między cudzysłowy, np. API_KEY = "abc123"
 API_KEY = "rd0rSweA0HdXUfrNpJB5U6vypciTFcvBzuM8kRFarVU="
 
-HEADERS = {"accept": "application/json"}
+# OPCJA 2: jeśli zostawisz API_KEY = "", kod weźmie klucz z GitHub Secrets / env
+if not API_KEY:
+    API_KEY = os.getenv("GUS_DBW_API_KEY")
 
+HEADERS = {"accept": "application/json"}
 if API_KEY:
     HEADERS["X-ClientId"] = API_KEY
 
+# Polska; Kraje towary; CN - uzupełniająca jednostka miary
 ID_PRZEKROJ = 1434
 
+# Rok + 12 miesięcy
+# 282 = rok
+# 247-258 = miesiące M01-M12
 PERIODS = {
-    282: {"month": None, "label": "YEAR"},  # cały rok
+    282: {"month": None, "period_type": "year"},
 
-    247: {"month": 1, "label": "MONTH"},
-    248: {"month": 2, "label": "MONTH"},
-    249: {"month": 3, "label": "MONTH"},
-    250: {"month": 4, "label": "MONTH"},
-    251: {"month": 5, "label": "MONTH"},
-    252: {"month": 6, "label": "MONTH"},
-    253: {"month": 7, "label": "MONTH"},
-    254: {"month": 8, "label": "MONTH"},
-    255: {"month": 9, "label": "MONTH"},
-    256: {"month": 10, "label": "MONTH"},
-    257: {"month": 11, "label": "MONTH"},
-    258: {"month": 12, "label": "MONTH"},
+    247: {"month": 1, "period_type": "month"},
+    248: {"month": 2, "period_type": "month"},
+    249: {"month": 3, "period_type": "month"},
+    250: {"month": 4, "period_type": "month"},
+    251: {"month": 5, "period_type": "month"},
+    252: {"month": 6, "period_type": "month"},
+    253: {"month": 7, "period_type": "month"},
+    254: {"month": 8, "period_type": "month"},
+    255: {"month": 9, "period_type": "month"},
+    256: {"month": 10, "period_type": "month"},
+    257: {"month": 11, "period_type": "month"},
+    258: {"month": 12, "period_type": "month"},
 }
 
 TARGET_CODES = [
@@ -65,10 +74,11 @@ DATASETS = [
 PAGE_SIZE = 5000
 MAX_PAGE = 100
 
-# With API key we can go faster, without key keep it safer
+# Z kluczem szybciej, bez klucza wolniej
 SLEEP = 0.2 if API_KEY else 0.8
 
-# True = only "Ogółem", as on GUS page
+# True = tylko "Ogółem", jak w widoku GUS
+# False = rozbicie po krajach
 ONLY_TOTAL_COUNTRY = True
 
 
@@ -227,6 +237,12 @@ def get_total_country_ids(sections):
 # DOWNLOAD
 # ============================================================
 
+def make_period_label(year, month):
+    if month is None:
+        return str(year)
+    return f"{year} M{month:02d}"
+
+
 def filter_rows(rows, target_product_ids, total_country_ids):
     if not rows:
         return []
@@ -249,14 +265,15 @@ def filter_rows(rows, target_product_ids, total_country_ids):
 def download_dataset_for_year(dataset, year, target_product_ids, total_country_ids):
     all_rows = []
 
-    for id_okres, month in MONTHS.items():
+    for id_okres, period_info in PERIODS.items():
+        month = period_info["month"]
+        period_label = make_period_label(year, month)
 
         print("\nDownloading:")
         print(
             "dataset:", dataset["sheet"],
             "id_zmienna:", dataset["id_zmienna"],
-            "year:", year,
-            "month:", month,
+            "period:", period_label,
             "id_okres:", id_okres,
         )
 
@@ -289,7 +306,14 @@ def download_dataset_for_year(dataset, year, target_product_ids, total_country_i
                 row["dataset_description"] = dataset["description"]
                 row["year"] = year
                 row["month"] = month
-                row["date"] = f"{year}-{month:02d}-01"
+                row["period_label"] = period_label
+                row["period_type"] = period_info["period_type"]
+
+                if month is None:
+                    row["date"] = f"{year}-01-01"
+                else:
+                    row["date"] = f"{year}-{month:02d}-01"
+
                 row["page_downloaded"] = page
 
             all_rows.extend(matched)
@@ -362,6 +386,19 @@ def add_names(df, sections):
     return df
 
 
+def period_sort_key(col):
+    col = str(col)
+
+    if col.isdigit():
+        return int(col), 0
+
+    try:
+        year, month = col.split(" M")
+        return int(year), int(month)
+    except Exception:
+        return 9999, 99
+
+
 def make_gus_layout(df, sections):
     if df.empty:
         return pd.DataFrame()
@@ -370,11 +407,14 @@ def make_gus_layout(df, sections):
 
     df["wartosc"] = pd.to_numeric(df["wartosc"], errors="coerce")
 
-    df["period"] = (
-        df["year"].astype(int).astype(str)
-        + " M"
-        + df["month"].astype(int).astype(str).str.zfill(2)
-    )
+    if "period_label" in df.columns:
+        df["period"] = df["period_label"]
+    else:
+        df["period"] = (
+            df["year"].astype(int).astype(str)
+            + " M"
+            + df["month"].astype(int).astype(str).str.zfill(2)
+        )
 
     df["typ_informacji"] = "[-]"
 
@@ -409,8 +449,9 @@ def make_gus_layout(df, sections):
     period_cols = sorted(
         [
             c for c in layout.columns
-            if isinstance(c, str) and " M" in c
-        ]
+            if isinstance(c, str) and (c.isdigit() or " M" in c)
+        ],
+        key=period_sort_key,
     )
 
     layout = layout[
@@ -450,15 +491,6 @@ KEY_COLUMNS = [
 ]
 
 
-def period_sort_key(col):
-    # example: 2018 M01
-    try:
-        year, month = str(col).split(" M")
-        return int(year), int(month)
-    except Exception:
-        return 9999, 99
-
-
 def combine_existing_with_new(existing_df, new_df, year):
     if existing_df is None or existing_df.empty:
         combined = new_df.copy()
@@ -466,12 +498,15 @@ def combine_existing_with_new(existing_df, new_df, year):
         existing_df = existing_df.copy()
         new_df = new_df.copy()
 
-        year_prefix = f"{year} M"
+        year_str = str(year)
+        year_month_prefix = f"{year} M"
 
-        # Remove old columns for this year, so rerun replaces the year cleanly
+        # usuwa stary rok i stare miesiące tego roku,
+        # żeby ponowne odpalenie np. 2022 zastąpiło stare dane
         cols_to_drop = [
             c for c in existing_df.columns
-            if isinstance(c, str) and c.startswith(year_prefix)
+            if isinstance(c, str)
+            and (c == year_str or c.startswith(year_month_prefix))
         ]
 
         existing_df = existing_df.drop(columns=cols_to_drop, errors="ignore")
@@ -484,7 +519,7 @@ def combine_existing_with_new(existing_df, new_df, year):
 
     period_cols = [
         c for c in combined.columns
-        if isinstance(c, str) and " M" in c
+        if isinstance(c, str) and (c.isdigit() or " M" in c)
     ]
 
     period_cols = sorted(period_cols, key=period_sort_key)
