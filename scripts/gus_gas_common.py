@@ -18,9 +18,10 @@ OUT.mkdir(exist_ok=True)
 
 MASTER_FILE = OUT / "gus_gas_TJ_2018_plus_IMPORT_EXPORT_MASTER.xlsx"
 
-API_KEY = os.getenv(rd0rSweA0HdXUfrNpJB5U6vypciTFcvBzuM8kRFarVU=")
+API_KEY = "rd0rSweA0HdXUfrNpJB5U6vypciTFcvBzuM8kRFarVU="
 
 HEADERS = {"accept": "application/json"}
+
 if API_KEY:
     HEADERS["X-ClientId"] = API_KEY
 
