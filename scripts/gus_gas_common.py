@@ -27,19 +27,21 @@ if API_KEY:
 
 ID_PRZEKROJ = 1434
 
-MONTHS = {
-    247: 1,
-    248: 2,
-    249: 3,
-    250: 4,
-    251: 5,
-    252: 6,
-    253: 7,
-    254: 8,
-    255: 9,
-    256: 10,
-    257: 11,
-    258: 12,
+PERIODS = {
+    282: {"month": None, "label": "YEAR"},  # cały rok
+
+    247: {"month": 1, "label": "MONTH"},
+    248: {"month": 2, "label": "MONTH"},
+    249: {"month": 3, "label": "MONTH"},
+    250: {"month": 4, "label": "MONTH"},
+    251: {"month": 5, "label": "MONTH"},
+    252: {"month": 6, "label": "MONTH"},
+    253: {"month": 7, "label": "MONTH"},
+    254: {"month": 8, "label": "MONTH"},
+    255: {"month": 9, "label": "MONTH"},
+    256: {"month": 10, "label": "MONTH"},
+    257: {"month": 11, "label": "MONTH"},
+    258: {"month": 12, "label": "MONTH"},
 }
 
 TARGET_CODES = [
