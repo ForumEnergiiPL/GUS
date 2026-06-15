@@ -1,0 +1,14 @@
+﻿dataset,Zmienna,id_zmienna,id_przekroj,Typ informacji,Kraje towary,CN - uzupełniająca jednostka miary,Jednostka terytorialna,year,month,period,period_type,wartosc,id_sposob_prezentacji_miara,page_downloaded
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,,2019,year,5112453119.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,1.0,2019 M01,month,733726052.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,2.0,2019 M02,month,-1954825180.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,3.0,2019 M03,month,2496930291.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,4.0,2019 M04,month,585921776.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,5.0,2019 M05,month,-1061826295.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,6.0,2019 M06,month,411785338.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,7.0,2019 M07,month,-529644948.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,8.0,2019 M08,month,-1092973002.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,9.0,2019 M09,month,2702466384.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,10.0,2019 M10,month,978564891.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,11.0,2019 M11,month,2307194932.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,12.0,2019 M12,month,-464867120.0,180,0

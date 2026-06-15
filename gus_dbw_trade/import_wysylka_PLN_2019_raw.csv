@@ -1,0 +1,14 @@
+﻿dataset,Zmienna,id_zmienna,id_przekroj,Typ informacji,Kraje towary,CN - uzupełniająca jednostka miary,Jednostka terytorialna,year,month,period,period_type,wartosc,id_sposob_prezentacji_miara,page_downloaded
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,,2019,year,1018478990123.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,1.0,2019 M01,month,81878946831.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,2.0,2019 M02,month,84262405536.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,3.0,2019 M03,month,87102444456.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,4.0,2019 M04,month,84976653564.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,5.0,2019 M05,month,88383931681.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,6.0,2019 M06,month,79441568926.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,7.0,2019 M07,month,85302840577.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,8.0,2019 M08,month,79596187291.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,9.0,2019 M09,month,86733941116.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,10.0,2019 M10,month,95273020159.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,11.0,2019 M11,month,87916978261.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2019,12.0,2019 M12,month,77610071725.0,180,0
