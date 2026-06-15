@@ -1,4 +1,3 @@
-import os
 import re
 import time
 import requests
@@ -20,14 +19,22 @@ OUT.mkdir(exist_ok=True)
 OUTPUT_FILE = OUT / "gus_gas_TJ_2018_plus_IMPORT_EXPORT.xlsx"
 SECTIONS_FILE = OUT / "03_section_positions.xlsx"
 
-API_KEY = os.getenv("GUS_DBW_API_KEY")
+# ============================================================
+# API KEY — TUTAJ WKLEJASZ KLUCZ
+# ============================================================
 
-HEADERS = {"accept": "application/json"}
-if API_KEY:
-    HEADERS["X-ClientId"] = API_KEY
+API_KEY = "rd0rSweA0HdXUfrNpJB5U6vypciTFcvBzuM8kRFarVU="
 
+HEADERS = {
+    "accept": "application/json",
+    "X-ClientId": API_KEY,
+}
+
+# Correct section:
+# Polska; Kraje towary; CN - uzupełniająca jednostka miary
 ID_PRZEKROJ = 1434
 
+# Jeśli plik wynikowy jeszcze nie istnieje, pobieranie zacznie się od tego roku
 START_YEAR_IF_NO_FILE = 2018
 
 MONTHS = {
@@ -69,6 +76,8 @@ PAGE_SIZE = 5000
 MAX_PAGE = 100
 SLEEP = 0.7
 
+# True = tylko kraj "Ogółem", jak na ekranie GUS
+# False = wszystkie kraje
 ONLY_TOTAL_COUNTRY = True
 
 KEY_COLS = [
@@ -101,7 +110,7 @@ session.mount("http://", adapter)
 
 
 # ============================================================
-# BASIC HELPERS
+# PERIOD HELPERS
 # ============================================================
 
 def is_period_col(col):
@@ -330,7 +339,15 @@ def filter_rows(rows, target_product_ids, total_country_ids):
     return out
 
 
-def download_dataset(dataset, target_product_ids, total_country_ids, start_year, start_month, end_year, end_month):
+def download_dataset(
+    dataset,
+    target_product_ids,
+    total_country_ids,
+    start_year,
+    start_month,
+    end_year,
+    end_month,
+):
     all_rows = []
 
     for year, month in month_range(start_year, start_month, end_year, end_month):
@@ -393,7 +410,7 @@ def download_dataset(dataset, target_product_ids, total_country_ids, start_year,
 
 
 # ============================================================
-# LAYOUT
+# NAMES + GUS-LIKE LAYOUT
 # ============================================================
 
 def add_names(df, sections):
@@ -527,6 +544,10 @@ def make_gus_layout(df, sections):
     return layout
 
 
+# ============================================================
+# MERGE WITH EXISTING EXCEL
+# ============================================================
+
 def read_existing_sheet(path, sheet_name):
     if not path.exists():
         return pd.DataFrame()
@@ -595,7 +616,11 @@ def autofit_excel(path):
         for cell in ws[1]:
             cell.fill = header_fill
             cell.font = header_font
-            cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+            cell.alignment = Alignment(
+                horizontal="center",
+                vertical="center",
+                wrap_text=True,
+            )
             cell.border = border
 
         for row in ws.iter_rows():
@@ -630,6 +655,7 @@ def autofit_excel(path):
 
 def main():
     now = datetime.now()
+
     end_year = now.year
     end_month = now.month
 
@@ -651,7 +677,10 @@ def main():
         print("DATASET:", sheet)
         print("==============================")
 
-        start_year, start_month, last_existing_period = get_download_start(OUTPUT_FILE, sheet)
+        start_year, start_month, last_existing_period = get_download_start(
+            OUTPUT_FILE,
+            sheet,
+        )
 
         print("Last existing period:", last_existing_period)
         print("Download from:", tuple_to_period(start_year, start_month))
@@ -661,9 +690,9 @@ def main():
 
         if (start_year, start_month) > (end_year, end_month):
             print("No new months to download.")
-            final_df = existing_df
             raw_df = pd.DataFrame()
             new_layout_df = pd.DataFrame()
+            final_df = existing_df
         else:
             raw_df = download_dataset(
                 dataset=dataset,
@@ -684,8 +713,14 @@ def main():
 
         final_layouts[sheet] = final_df
 
-        period_cols = [c for c in final_df.columns if is_period_col(c)] if not final_df.empty else []
-        last_final_period = sorted(period_cols, key=period_to_tuple)[-1] if period_cols else None
+        if not final_df.empty:
+            period_cols = [c for c in final_df.columns if is_period_col(c)]
+            if period_cols:
+                last_final_period = sorted(period_cols, key=period_to_tuple)[-1]
+            else:
+                last_final_period = None
+        else:
+            last_final_period = None
 
         summary_rows.append(
             {
