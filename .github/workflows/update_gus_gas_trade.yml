@@ -5,7 +5,7 @@ on:
 
   schedule:
     # GitHub Actions działa w UTC.
-    # W czasie letnim w Polsce 14:20 UTC = 16:20 CEST.
+    # 14:20 UTC = 16:20 w Polsce w czasie letnim.
     - cron: "20 14 * * *"
 
 permissions:
@@ -35,8 +35,6 @@ jobs:
           pip install pandas openpyxl requests urllib3
 
       - name: Run GUS update script
-        env:
-          GUS_DBW_API_KEY: ${{ secrets.GUS_DBW_API_KEY }}
         run: |
           python update_gus_gas_trade.py
 
