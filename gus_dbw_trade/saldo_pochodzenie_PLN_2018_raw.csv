@@ -1,0 +1,14 @@
+﻿dataset,Zmienna,id_zmienna,id_przekroj,Typ informacji,Kraje towary,CN - uzupełniająca jednostka miary,Jednostka terytorialna,year,month,period,period_type,wartosc,id_sposob_prezentacji_miara,page_downloaded
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,,2018,year,-19506625534.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,1.0,2018 M01,month,-2145823146.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,2.0,2018 M02,month,-2400474546.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,3.0,2018 M03,month,-1696734268.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,4.0,2018 M04,month,-57988128.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,5.0,2018 M05,month,158570888.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,6.0,2018 M06,month,-1716808924.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,7.0,2018 M07,month,-1162421058.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,8.0,2018 M08,month,-3327337965.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,9.0,2018 M09,month,62874830.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,10.0,2018 M10,month,-1556946769.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,11.0,2018 M11,month,316726912.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,12.0,2018 M12,month,-5980263360.0,180,0

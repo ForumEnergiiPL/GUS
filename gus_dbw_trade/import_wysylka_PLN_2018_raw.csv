@@ -1,0 +1,14 @@
+﻿dataset,Zmienna,id_zmienna,id_przekroj,Typ informacji,Kraje towary,CN - uzupełniająca jednostka miary,Jednostka terytorialna,year,month,period,period_type,wartosc,id_sposob_prezentacji_miara,page_downloaded
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,,2018,year,970830808669.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,1.0,2018 M01,month,76630519831.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,2.0,2018 M02,month,74282490308.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,3.0,2018 M03,month,82427226760.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,4.0,2018 M04,month,76700304771.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,5.0,2018 M05,month,78075529233.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,6.0,2018 M06,month,84072481570.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,7.0,2018 M07,month,79702643826.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,8.0,2018 M08,month,79650728060.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,9.0,2018 M09,month,81385514049.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,10.0,2018 M10,month,92962576295.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,11.0,2018 M11,month,89180986638.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2018,12.0,2018 M12,month,75759807328.0,180,0
