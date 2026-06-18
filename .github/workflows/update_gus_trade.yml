@@ -41,22 +41,34 @@ jobs:
       - name: Show repository files before update
         run: |
           echo "Current repository structure:"
-          find . -maxdepth 3 -type f | sort
+          find . -maxdepth 4 -type f | sort
 
       - name: Update selected GUS year
+        env:
+          PYTHONUNBUFFERED: "1"
         run: |
+          echo "Starting GUS update"
+          echo "year=${{ github.event.inputs.year }}"
+          echo "create_new=${{ github.event.inputs.create_new }}"
+
           if [ "${{ github.event.inputs.create_new }}" = "true" ]; then
-            python scripts/update_gus_trade_year.py --year ${{ github.event.inputs.year }} --create-new
+            python -u scripts/update_gus_trade_year.py --year ${{ github.event.inputs.year }} --create-new
           else
-            python scripts/update_gus_trade_year.py --year ${{ github.event.inputs.year }}
+            python -u scripts/update_gus_trade_year.py --year ${{ github.event.inputs.year }}
           fi
 
       - name: Show generated files
+        if: always()
         run: |
           echo "Generated files:"
-          find gus_dbw_trade -type f | sort
+          if [ -d "gus_dbw_trade" ]; then
+            find gus_dbw_trade -type f | sort
+          else
+            echo "No gus_dbw_trade directory found"
+          fi
 
       - name: Commit updated GUS files
+        if: success()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
