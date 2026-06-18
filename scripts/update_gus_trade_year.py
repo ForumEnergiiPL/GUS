@@ -18,6 +18,7 @@ OUT.mkdir(exist_ok=True)
 
 MASTER_FILE = OUT / "gus_import_saldo_PLN_2018_plus_MASTER.xlsx"
 
+
 # ============================================================
 # API KEY W KODZIE
 # ============================================================
@@ -49,7 +50,7 @@ DATASETS = [
     },
 ]
 
-# 282 = rok, 247-258 = miesiące
+# 282 = rok, 247-258 = miesiące M01-M12
 PERIODS = {
     282: {"month": None, "period_type": "year"},
 
@@ -74,7 +75,10 @@ POS_KRAJE_OGOL = 6649664
 POS_CN_OGOL = 7438267
 
 PAGE_SIZE = 5000
-MAX_PAGE = 5
+
+# MAX_PAGE = 1 oznacza strony 0 i 1, czyli maksymalnie 2 requesty na okres.
+# Nie ustawiaj tu 50/80, bo wtedy GitHub będzie mielił bez sensu.
+MAX_PAGE = 1
 
 SLEEP = 0.15 if API_KEY else 0.6
 
@@ -86,7 +90,7 @@ SLEEP = 0.15 if API_KEY else 0.6
 session = requests.Session()
 
 retries = Retry(
-    total=5,
+    total=2,
     backoff_factor=1.5,
     status_forcelist=[429, 500, 502, 503, 504],
     allowed_methods=["GET"],
@@ -104,13 +108,13 @@ session.mount("http://", adapter)
 def get_json(endpoint, params=None, allow_404=False):
     url = f"{BASE_URL}/{endpoint}"
 
-    for attempt in range(1, 6):
+    for attempt in range(1, 3):
         try:
             r = session.get(
                 url,
                 params=params,
                 headers=HEADERS,
-                timeout=45,
+                timeout=20,
             )
 
             time.sleep(SLEEP)
@@ -127,10 +131,11 @@ def get_json(endpoint, params=None, allow_404=False):
             return r.json()
 
         except requests.exceptions.RequestException as e:
-            print(f"Request failed, attempt {attempt}/5: {e}", flush=True)
-            time.sleep(4 * attempt)
+            print(f"Request failed, attempt {attempt}/2: {e}", flush=True)
+            time.sleep(3 * attempt)
 
-    raise RuntimeError("API request failed after 5 attempts")
+    print("API request failed after 2 attempts. Skipping this request.", flush=True)
+    return None
 
 
 def extract_rows(obj):
@@ -260,13 +265,34 @@ def choose_pln_candidate(candidates):
     if not numeric:
         raise RuntimeError("Brak liczbowych kandydatów dla wartości [zł].")
 
-    # Dla tego widoku [zł] jest największe bezwzględnie.
+    # Dla tego widoku [zł] jest największe bezwzględnie
+    # spośród wartości dla dokładnego wiersza.
     selected = max(
         numeric,
         key=lambda r: abs(to_float(r.get("wartosc"))),
     )
 
     return selected
+
+
+def empty_period_row(dataset, year, month, period_label, period_info):
+    return {
+        "dataset": dataset["sheet"],
+        "Zmienna": dataset["description"],
+        "id_zmienna": dataset["id_zmienna"],
+        "id_przekroj": ID_PRZEKROJ,
+        "Typ informacji": "[zł]",
+        "Kraje towary": "Ogółem",
+        "CN": "OG306966 - OGÓŁEM",
+        "Jednostka terytorialna": "POLSKA",
+        "year": year,
+        "month": month,
+        "period": period_label,
+        "period_type": period_info["period_type"],
+        "wartosc": None,
+        "id_sposob_prezentacji_miara": None,
+        "status": "missing_or_failed",
+    }
 
 
 def download_one_period(dataset, year, id_okres, period_info):
@@ -303,7 +329,8 @@ def download_one_period(dataset, year, id_okres, period_info):
 
         candidates.extend(matched)
 
-        # Jeżeli znaleźliśmy dokładny wiersz, nie mielimy dalej.
+        # Jeśli znaleźliśmy dokładny wiersz i jest kilka typów informacji,
+        # nie mielimy dalej.
         if candidates:
             break
 
@@ -311,12 +338,25 @@ def download_one_period(dataset, year, id_okres, period_info):
             break
 
     if not candidates:
-        raise RuntimeError(
-            f"Nie znaleziono rekordu dla {dataset['description']} {period_label}"
+        print(
+            f"WARNING: no candidates for {dataset['description']} {period_label}. Saving empty value.",
+            flush=True,
         )
+        return empty_period_row(dataset, year, month, period_label, period_info)
 
-    selected = choose_pln_candidate(candidates)
-    value = to_float(selected.get("wartosc"))
+    try:
+        selected = choose_pln_candidate(candidates)
+        value = to_float(selected.get("wartosc"))
+        spm_id = get_spm_id(selected)
+        status = "ok"
+    except Exception as e:
+        print(
+            f"WARNING: cannot choose PLN candidate for {dataset['description']} {period_label}: {e}",
+            flush=True,
+        )
+        value = None
+        spm_id = None
+        status = "candidate_selection_failed"
 
     print("selected value:", value, flush=True)
 
@@ -334,7 +374,8 @@ def download_one_period(dataset, year, id_okres, period_info):
         "period": period_label,
         "period_type": period_info["period_type"],
         "wartosc": value,
-        "id_sposob_prezentacji_miara": get_spm_id(selected),
+        "id_sposob_prezentacji_miara": spm_id,
+        "status": status,
     }
 
 
@@ -415,6 +456,8 @@ def combine_existing_with_new(existing_df, new_df, year):
         year_str = str(year)
         year_month_prefix = f"{year} M"
 
+        # Usuwa stare kolumny danego roku,
+        # żeby ponowne odpalenie tego samego roku nadpisało dane.
         cols_to_drop = [
             c for c in existing_df.columns
             if isinstance(c, str)
@@ -536,6 +579,7 @@ def update_master_excel(year, create_new=False):
                 "updated_year": year,
                 "raw_rows_for_year": len(raw_df),
                 "final_rows_in_sheet": len(combined_df),
+                "failed_or_missing_periods": int((raw_df["status"] != "ok").sum()),
                 "api_key_used": bool(API_KEY),
                 "raw_csv": str(raw_csv_path),
             }
