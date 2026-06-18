@@ -22,7 +22,7 @@ concurrency:
 jobs:
   update-gus-trade:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 60
 
     steps:
       - name: Checkout repository
@@ -38,11 +38,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install requests pandas openpyxl urllib3
 
-      - name: Show repository files before update
-        run: |
-          echo "Current repository structure:"
-          find . -maxdepth 4 -type f | sort
-
       - name: Update selected GUS year
         env:
           PYTHONUNBUFFERED: "1"
@@ -57,18 +52,7 @@ jobs:
             python -u scripts/update_gus_trade_year.py --year ${{ github.event.inputs.year }}
           fi
 
-      - name: Show generated files
-        if: always()
-        run: |
-          echo "Generated files:"
-          if [ -d "gus_dbw_trade" ]; then
-            find gus_dbw_trade -type f | sort
-          else
-            echo "No gus_dbw_trade directory found"
-          fi
-
       - name: Commit updated GUS files
-        if: success()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
