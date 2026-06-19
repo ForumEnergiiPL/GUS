@@ -1,3 +1,4 @@
+import os
 import time
 import argparse
 import requests
@@ -18,11 +19,6 @@ OUT.mkdir(exist_ok=True)
 
 MASTER_FILE = OUT / "gus_import_saldo_PLN_2018_plus_MASTER.xlsx"
 
-
-# ============================================================
-# API KEY W KODZIE
-# ============================================================
-
 API_KEY = "rd0rSweA0HdXUfrNpJB5U6vypciTFcvBzuM8kRFarVU="
 
 HEADERS = {"accept": "application/json"}
@@ -31,12 +27,13 @@ if API_KEY:
 
 
 # ============================================================
-# DANE DBW
+# DBW TABLE SETTINGS
 # ============================================================
 
-# Przekrój: Polska; Kraje towary; CN
+# Polska; Kraje towary; CN
 ID_PRZEKROJ = 1136
 
+# Zmienne z Twojej tabeli
 DATASETS = [
     {
         "sheet": "import_wysylka_PLN",
@@ -68,19 +65,20 @@ PERIODS = {
     258: {"month": 12, "period_type": "month"},
 }
 
-# Dokładny wiersz:
-# POLSKA / Ogółem / OG306966 - OGÓŁEM
+# Dokładny wiersz z DBW:
+# POLSKA / Kraje towary = Ogółem / CN = OG306966 - OGÓŁEM
 POS_POLSKA = 33617
 POS_KRAJE_OGOL = 6649664
 POS_CN_OGOL = 7438267
 
 PAGE_SIZE = 5000
+MAX_PAGE = 100
 
-# MAX_PAGE = 1 oznacza strony 0 i 1, czyli maksymalnie 2 requesty na okres.
-# Nie ustawiaj tu 50/80, bo wtedy GitHub będzie mielił bez sensu.
-MAX_PAGE = 1
+SLEEP = 0.2 if API_KEY else 0.8
 
-SLEEP = 0.15 if API_KEY else 0.6
+# Jeżeli kod nie znajdzie jednoznacznie typu [zł], wpiszesz tu ręcznie ID z debug printa.
+# Na razie zostaw None.
+FORCE_PLN_WAY_ID = None
 
 
 # ============================================================
@@ -90,8 +88,8 @@ SLEEP = 0.15 if API_KEY else 0.6
 session = requests.Session()
 
 retries = Retry(
-    total=2,
-    backoff_factor=1.5,
+    total=5,
+    backoff_factor=2,
     status_forcelist=[429, 500, 502, 503, 504],
     allowed_methods=["GET"],
 )
@@ -108,13 +106,13 @@ session.mount("http://", adapter)
 def get_json(endpoint, params=None, allow_404=False):
     url = f"{BASE_URL}/{endpoint}"
 
-    for attempt in range(1, 3):
+    for attempt in range(1, 6):
         try:
             r = session.get(
                 url,
                 params=params,
                 headers=HEADERS,
-                timeout=20,
+                timeout=90,
             )
 
             time.sleep(SLEEP)
@@ -123,19 +121,18 @@ def get_json(endpoint, params=None, allow_404=False):
                 return None
 
             if r.status_code != 200:
-                print("URL:", r.url, flush=True)
-                print("STATUS:", r.status_code, flush=True)
-                print("TEXT:", r.text[:1000], flush=True)
+                print("URL:", r.url)
+                print("STATUS:", r.status_code)
+                print("TEXT:", r.text[:1000])
                 r.raise_for_status()
 
             return r.json()
 
         except requests.exceptions.RequestException as e:
-            print(f"Request failed, attempt {attempt}/2: {e}", flush=True)
-            time.sleep(3 * attempt)
+            print(f"Request failed, attempt {attempt}/5:", e)
+            time.sleep(5 * attempt)
 
-    print("API request failed after 2 attempts. Skipping this request.", flush=True)
-    return None
+    raise RuntimeError("API request failed after 5 attempts")
 
 
 def extract_rows(obj):
@@ -179,24 +176,13 @@ def to_float(x):
         return None
 
 
-def make_period_label(year, month):
-    if month is None:
-        return str(year)
-    return f"{year} M{month:02d}"
+def norm(x):
+    return str(x or "").strip().lower()
 
 
-def period_sort_key(col):
-    col = str(col)
-
-    if col.isdigit():
-        return int(col), 0
-
-    try:
-        year, month = col.split(" M")
-        return int(year), int(month)
-    except Exception:
-        return 9999, 99
-
+# ============================================================
+# WAY OF PRESENTATION / TYP INFORMACJI
+# ============================================================
 
 def get_spm_id(row):
     for k, v in row.items():
@@ -206,16 +192,82 @@ def get_spm_id(row):
     return None
 
 
+def load_way_of_presentation():
+    obj = get_json(
+        "dictionaries/way-of-presentation",
+        params={
+            "page": 1,
+            "page-size": 5000,
+            "lang": "pl",
+        },
+    )
+
+    rows = extract_rows(obj)
+
+    mapping = {}
+
+    for row in rows:
+        way_id = get_spm_id(row)
+
+        if way_id is None:
+            for k, v in row.items():
+                kk = str(k).lower().replace("_", "-")
+                if "id" in kk and "sposob" in kk and "prezentacji" in kk and "miara" in kk:
+                    way_id = to_int(v)
+                    break
+
+        if way_id is not None:
+            mapping[way_id] = " | ".join(str(v) for v in row.values())
+
+    return mapping
+
+
+def is_pln_row(row, way_map):
+    way_id = get_spm_id(row)
+
+    if FORCE_PLN_WAY_ID is not None:
+        return way_id == FORCE_PLN_WAY_ID
+
+    if way_id is None:
+        return False
+
+    opis = norm(way_map.get(way_id, ""))
+
+    # Musi być zł / PLN
+    if not ("zł" in opis or "zl" in opis or "pln" in opis):
+        return False
+
+    # Nie chcemy wskaźników, EUR/USD, procentów itd.
+    bad = [
+        "eur",
+        "usd",
+        "%",
+        "100",
+        "dynamik",
+        "wskaźnik",
+        "wskaznik",
+        "tys",
+        "mln",
+        "kg",
+        "tona",
+        "tony",
+        "tj",
+    ]
+
+    if any(x in opis for x in bad):
+        return False
+
+    return True
+
+
 # ============================================================
 # DOWNLOAD
 # ============================================================
 
-def build_filter():
-    return (
-        f"id-pozycja-1=={POS_POLSKA},"
-        f"id-pozycja-2=={POS_KRAJE_OGOL},"
-        f"id-pozycja-3=={POS_CN_OGOL}"
-    )
+def make_period_label(year, month):
+    if month is None:
+        return str(year)
+    return f"{year} M{month:02d}"
 
 
 def fetch_page(id_zmienna, year, id_okres, page):
@@ -224,7 +276,6 @@ def fetch_page(id_zmienna, year, id_okres, page):
         "id-przekroj": ID_PRZEKROJ,
         "id-rok": year,
         "id-okres": id_okres,
-        "filters": build_filter(),
         "ile-na-stronie": PAGE_SIZE,
         "numer-strony": page,
         "lang": "pl",
@@ -239,7 +290,7 @@ def fetch_page(id_zmienna, year, id_okres, page):
     return extract_rows(obj)
 
 
-def is_target_row(row):
+def is_target_position(row):
     return (
         to_int(row.get("id-pozycja-1")) == POS_POLSKA
         and to_int(row.get("id-pozycja-2")) == POS_KRAJE_OGOL
@@ -247,64 +298,19 @@ def is_target_row(row):
     )
 
 
-def choose_pln_candidate(candidates):
-    numeric = []
-
-    for row in candidates:
-        value = to_float(row.get("wartosc"))
-
-        if value is None:
-            continue
-
-        # Odrzucamy wskaźniki typu 96.8, 105.1 itd.
-        if abs(value) < 10000:
-            continue
-
-        numeric.append(row)
-
-    if not numeric:
-        raise RuntimeError("Brak liczbowych kandydatów dla wartości [zł].")
-
-    # Dla tego widoku [zł] jest największe bezwzględnie
-    # spośród wartości dla dokładnego wiersza.
-    selected = max(
-        numeric,
-        key=lambda r: abs(to_float(r.get("wartosc"))),
-    )
-
-    return selected
-
-
-def empty_period_row(dataset, year, month, period_label, period_info):
-    return {
-        "dataset": dataset["sheet"],
-        "Zmienna": dataset["description"],
-        "id_zmienna": dataset["id_zmienna"],
-        "id_przekroj": ID_PRZEKROJ,
-        "Typ informacji": "[zł]",
-        "Kraje towary": "Ogółem",
-        "CN": "OG306966 - OGÓŁEM",
-        "Jednostka terytorialna": "POLSKA",
-        "year": year,
-        "month": month,
-        "period": period_label,
-        "period_type": period_info["period_type"],
-        "wartosc": None,
-        "id_sposob_prezentacji_miara": None,
-        "status": "missing_or_failed",
-    }
-
-
-def download_one_period(dataset, year, id_okres, period_info):
+def download_one_period(dataset, year, id_okres, period_info, way_map):
     month = period_info["month"]
     period_label = make_period_label(year, month)
 
-    print(
-        f"\nDownloading: {dataset['sheet']} | {period_label} | id_okres={id_okres}",
-        flush=True,
-    )
-
     candidates = []
+
+    print("\nDownloading:")
+    print(
+        "dataset:", dataset["sheet"],
+        "id_zmienna:", dataset["id_zmienna"],
+        "period:", period_label,
+        "id_okres:", id_okres,
+    )
 
     for page in range(MAX_PAGE + 1):
         rows = fetch_page(
@@ -315,71 +321,83 @@ def download_one_period(dataset, year, id_okres, period_info):
         )
 
         if not rows:
-            print("page:", page, "empty - stop", flush=True)
+            print("page:", page, "empty / does not exist - stopping")
             break
 
-        matched = [row for row in rows if is_target_row(row)]
+        matched = [row for row in rows if is_target_position(row)]
 
         print(
             "page:", page,
             "rows:", len(rows),
-            "matched:", len(matched),
-            flush=True,
+            "matched target:", len(matched),
         )
 
         candidates.extend(matched)
 
-        # Jeśli znaleźliśmy dokładny wiersz i jest kilka typów informacji,
-        # nie mielimy dalej.
-        if candidates:
+        pln_candidates = [row for row in candidates if is_pln_row(row, way_map)]
+
+        if len(pln_candidates) == 1:
+            row = pln_candidates[0]
+            value = to_float(row.get("wartosc"))
+
+            return {
+                "dataset": dataset["sheet"],
+                "Zmienna": dataset["description"],
+                "id_zmienna": dataset["id_zmienna"],
+                "id_przekroj": ID_PRZEKROJ,
+                "Typ informacji": "[zł]",
+                "Kraje towary": "Ogółem",
+                "CN - uzupełniająca jednostka miary": "OG306966 - OGÓŁEM",
+                "Jednostka terytorialna": "POLSKA",
+                "year": year,
+                "month": month,
+                "period": period_label,
+                "period_type": period_info["period_type"],
+                "wartosc": value,
+                "id_sposob_prezentacji_miara": get_spm_id(row),
+                "page_downloaded": page,
+            }
+
+        if len(pln_candidates) > 1:
             break
 
         if len(rows) < PAGE_SIZE:
+            print("last page reached")
             break
 
-    if not candidates:
-        print(
-            f"WARNING: no candidates for {dataset['description']} {period_label}. Saving empty value.",
-            flush=True,
+    debug = []
+
+    for row in candidates:
+        way_id = get_spm_id(row)
+
+        debug.append(
+            {
+                "wartosc": row.get("wartosc"),
+                "id_sposob_prezentacji_miara": way_id,
+                "opis_typu": way_map.get(way_id, ""),
+                "id-pozycja-1": row.get("id-pozycja-1"),
+                "id-pozycja-2": row.get("id-pozycja-2"),
+                "id-pozycja-3": row.get("id-pozycja-3"),
+            }
         )
-        return empty_period_row(dataset, year, month, period_label, period_info)
 
-    try:
-        selected = choose_pln_candidate(candidates)
-        value = to_float(selected.get("wartosc"))
-        spm_id = get_spm_id(selected)
-        status = "ok"
-    except Exception as e:
-        print(
-            f"WARNING: cannot choose PLN candidate for {dataset['description']} {period_label}: {e}",
-            flush=True,
-        )
-        value = None
-        spm_id = None
-        status = "candidate_selection_failed"
+    debug_df = pd.DataFrame(debug)
 
-    print("selected value:", value, flush=True)
+    print("\nDEBUG candidates:")
+    print(debug_df.to_string(index=False))
 
-    return {
-        "dataset": dataset["sheet"],
-        "Zmienna": dataset["description"],
-        "id_zmienna": dataset["id_zmienna"],
-        "id_przekroj": ID_PRZEKROJ,
-        "Typ informacji": "[zł]",
-        "Kraje towary": "Ogółem",
-        "CN": "OG306966 - OGÓŁEM",
-        "Jednostka terytorialna": "POLSKA",
-        "year": year,
-        "month": month,
-        "period": period_label,
-        "period_type": period_info["period_type"],
-        "wartosc": value,
-        "id_sposob_prezentacji_miara": spm_id,
-        "status": status,
-    }
+    debug_path = OUT / f"debug_candidates_{dataset['sheet']}_{year}_{period_label.replace(' ', '_')}.xlsx"
+    debug_df.to_excel(debug_path, index=False)
+    print("Saved debug:", debug_path)
+
+    raise RuntimeError(
+        f"Nie udało się jednoznacznie znaleźć rekordu [zł] dla "
+        f"{dataset['description']} {period_label}. "
+        f"Sprawdź debug i ewentualnie ustaw FORCE_PLN_WAY_ID."
+    )
 
 
-def download_dataset_for_year(dataset, year):
+def download_dataset_for_year(dataset, year, way_map):
     rows = []
 
     for id_okres, period_info in PERIODS.items():
@@ -388,7 +406,9 @@ def download_dataset_for_year(dataset, year):
             year=year,
             id_okres=id_okres,
             period_info=period_info,
+            way_map=way_map,
         )
+
         rows.append(row)
 
     return pd.DataFrame(rows)
@@ -398,11 +418,24 @@ def download_dataset_for_year(dataset, year):
 # LAYOUT
 # ============================================================
 
+def period_sort_key(col):
+    col = str(col)
+
+    if col.isdigit():
+        return int(col), 0
+
+    try:
+        year, month = col.split(" M")
+        return int(year), int(month)
+    except Exception:
+        return 9999, 99
+
+
 KEY_COLUMNS = [
     "Zmienna",
     "Typ informacji",
     "Kraje towary",
-    "CN",
+    "CN - uzupełniająca jednostka miary",
     "Jednostka terytorialna",
 ]
 
@@ -429,12 +462,10 @@ def make_gus_layout(df):
         key=period_sort_key,
     )
 
-    return layout[KEY_COLUMNS + period_cols]
+    layout = layout[KEY_COLUMNS + period_cols]
 
+    return layout
 
-# ============================================================
-# MASTER FILE
-# ============================================================
 
 def read_existing_sheet(path, sheet_name):
     if not path.exists():
@@ -456,8 +487,6 @@ def combine_existing_with_new(existing_df, new_df, year):
         year_str = str(year)
         year_month_prefix = f"{year} M"
 
-        # Usuwa stare kolumny danego roku,
-        # żeby ponowne odpalenie tego samego roku nadpisało dane.
         cols_to_drop = [
             c for c in existing_df.columns
             if isinstance(c, str)
@@ -542,20 +571,27 @@ def autofit_excel(path):
     wb.save(path)
 
 
+# ============================================================
+# UPDATE MASTER
+# ============================================================
+
 def update_master_excel(year, create_new=False):
+    way_map = load_way_of_presentation()
+
     final_sheets = {}
     summary_rows = []
 
     for dataset in DATASETS:
-        print("\n==============================", flush=True)
-        print("DATASET:", dataset["sheet"], flush=True)
-        print("YEAR:", year, flush=True)
-        print("==============================", flush=True)
+        print("\n==============================")
+        print("DATASET:", dataset["sheet"])
+        print("YEAR:", year)
+        print("==============================")
 
-        raw_df = download_dataset_for_year(dataset, year)
-
-        raw_csv_path = OUT / f"{dataset['sheet']}_{year}_raw.csv"
-        raw_df.to_csv(raw_csv_path, index=False, encoding="utf-8-sig")
+        raw_df = download_dataset_for_year(
+            dataset=dataset,
+            year=year,
+            way_map=way_map,
+        )
 
         new_layout_df = make_gus_layout(raw_df)
 
@@ -572,6 +608,10 @@ def update_master_excel(year, create_new=False):
 
         final_sheets[dataset["sheet"]] = combined_df
 
+        # zapis surowego roku osobno, żeby mieć bazę także w CSV
+        raw_csv_path = OUT / f"{dataset['sheet']}_{year}_raw.csv"
+        raw_df.to_csv(raw_csv_path, index=False, encoding="utf-8-sig")
+
         summary_rows.append(
             {
                 "dataset": dataset["sheet"],
@@ -579,7 +619,6 @@ def update_master_excel(year, create_new=False):
                 "updated_year": year,
                 "raw_rows_for_year": len(raw_df),
                 "final_rows_in_sheet": len(combined_df),
-                "failed_or_missing_periods": int((raw_df["status"] != "ok").sum()),
                 "api_key_used": bool(API_KEY),
                 "raw_csv": str(raw_csv_path),
             }
@@ -590,8 +629,8 @@ def update_master_excel(year, create_new=False):
     save_master_excel(final_sheets, summary_df)
     autofit_excel(MASTER_FILE)
 
-    print("\nSaved master file:", MASTER_FILE, flush=True)
-    print(summary_df.to_string(index=False), flush=True)
+    print("\nSaved master file:", MASTER_FILE)
+    print(summary_df)
 
 
 # ============================================================
@@ -603,11 +642,6 @@ if __name__ == "__main__":
     parser.add_argument("--year", type=int, required=True)
     parser.add_argument("--create-new", action="store_true")
     args = parser.parse_args()
-
-    print("SCRIPT STARTED", flush=True)
-    print("YEAR:", args.year, flush=True)
-    print("CREATE_NEW:", args.create_new, flush=True)
-    print("API KEY USED:", bool(API_KEY), flush=True)
 
     update_master_excel(
         year=args.year,
