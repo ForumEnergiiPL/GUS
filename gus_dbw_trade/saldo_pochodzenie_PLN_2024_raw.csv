@@ -1,0 +1,14 @@
+﻿dataset,Zmienna,id_zmienna,id_przekroj,Typ informacji,Kraje towary,CN - uzupełniająca jednostka miary,Jednostka terytorialna,year,month,period,period_type,wartosc,id_sposob_prezentacji_miara,page_downloaded
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2024,,2024,year,2332285853.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2024,1.0,2024 M01,month,6511433863.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2024,2.0,2024 M02,month,3263804131.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2024,3.0,2024 M03,month,4588289765.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2024,4.0,2024 M04,month,2347137246.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2024,5.0,2024 M05,month,820211099.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2024,6.0,2024 M06,month,-113247867.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2024,7.0,2024 M07,month,-2384387909.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2024,8.0,2024 M08,month,-6588643341.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2024,9.0,2024 M09,month,819063386.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2024,10.0,2024 M10,month,679952238.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2024,11.0,2024 M11,month,-1586140224.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2024,12.0,2024 M12,month,-6025186534.0,180,0
