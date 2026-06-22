@@ -1,0 +1,14 @@
+﻿dataset,Zmienna,id_zmienna,id_przekroj,Typ informacji,Kraje towary,CN - uzupełniająca jednostka miary,Jednostka terytorialna,year,month,period,period_type,wartosc,id_sposob_prezentacji_miara,page_downloaded
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2021,,2021,year,-6858605920.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2021,1.0,2021 M01,month,5589699811.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2021,2.0,2021 M02,month,2421564871.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2021,3.0,2021 M03,month,2254839081.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2021,4.0,2021 M04,month,6689022728.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2021,5.0,2021 M05,month,-269004710.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2021,6.0,2021 M06,month,1902719382.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2021,7.0,2021 M07,month,-2854752437.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2021,8.0,2021 M08,month,-5412113866.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2021,9.0,2021 M09,month,-1138520594.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2021,10.0,2021 M10,month,-1483951182.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2021,11.0,2021 M11,month,-1997978923.0,180,0
+saldo_pochodzenie_PLN,Saldo obrotów towarowych wg kraju pochodzenia,223,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2021,12.0,2021 M12,month,-12560130081.0,180,0
