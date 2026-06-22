@@ -1,0 +1,14 @@
+﻿dataset,Zmienna,id_zmienna,id_przekroj,Typ informacji,Kraje towary,CN - uzupełniająca jednostka miary,Jednostka terytorialna,year,month,period,period_type,wartosc,id_sposob_prezentacji_miara,page_downloaded
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2023,,2023,year,1568329175183.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2023,1.0,2023 M01,month,135808799687.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2023,2.0,2023 M02,month,132287310174.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2023,3.0,2023 M03,month,148360593649.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2023,4.0,2023 M04,month,128752171605.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2023,5.0,2023 M05,month,131960375419.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2023,6.0,2023 M06,month,128195849910.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2023,7.0,2023 M07,month,121573406362.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2023,8.0,2023 M08,month,120031626529.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2023,9.0,2023 M09,month,129667203351.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2023,10.0,2023 M10,month,139369120258.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2023,11.0,2023 M11,month,137198489260.0,180,0
+import_wysylka_PLN,Import towarów wg kraju wysyłki,222,1136,[zł],Ogółem,OG306966 - OGÓŁEM,POLSKA,2023,12.0,2023 M12,month,115124228979.0,180,0
