@@ -1,0 +1,243 @@
+name: Monthly GUS gas update
+
+on:
+
+  # Możesz też odpalić ręcznie
+  workflow_dispatch:
+
+  schedule:
+
+    # 20. dzień każdego miesiąca
+    # godz. 07:15 UTC
+    #
+    # W Polsce:
+    # 08:15 zimą
+    # 09:15 latem
+
+    - cron: "15 7 20 * *"
+
+
+permissions:
+  contents: write
+
+
+concurrency:
+
+  group: monthly-gus-gas-update
+
+  cancel-in-progress: false
+
+
+jobs:
+
+  update-gus:
+
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 180
+
+
+    steps:
+
+      # ======================================================
+      # POBRANIE REPO
+      # ======================================================
+
+      - name: Checkout repository
+
+        uses: actions/checkout@v4
+
+        with:
+          fetch-depth: 0
+
+
+      # ======================================================
+      # PYTHON
+      # ======================================================
+
+      - name: Set up Python
+
+        uses: actions/setup-python@v5
+
+        with:
+          python-version: "3.11"
+
+
+      # ======================================================
+      # POKAŻ STAN PRZED AKTUALIZACJĄ
+      # ======================================================
+
+      - name: Show files before update
+
+        shell: bash
+
+        run: |
+
+          echo "======================================"
+          echo "FILES BEFORE UPDATE"
+          echo "======================================"
+
+          ls -lh *.csv || true
+
+          echo ""
+
+          for file in \
+            gus_gaz_miesieczne_import.csv \
+            gus_gaz_roczne_import.csv \
+            gus_gaz_export_miesieczne.csv \
+            gus_gaz_export_roczne.csv
+
+          do
+
+            if [ -f "$file" ]; then
+
+              echo "$file:"
+              wc -l "$file"
+
+            fi
+
+          done
+
+
+      # ======================================================
+      # AKTUALIZACJA GUS
+      # ======================================================
+
+      - name: Update GUS gas data
+
+        shell: bash
+
+        run: |
+
+          python update_gus_gaz.py
+
+
+      # ======================================================
+      # POKAŻ STAN PO AKTUALIZACJI
+      # ======================================================
+
+      - name: Show files after update
+
+        shell: bash
+
+        run: |
+
+          echo "======================================"
+          echo "FILES AFTER UPDATE"
+          echo "======================================"
+
+          for file in \
+            gus_gaz_miesieczne_import.csv \
+            gus_gaz_roczne_import.csv \
+            gus_gaz_export_miesieczne.csv \
+            gus_gaz_export_roczne.csv
+
+          do
+
+            if [ ! -f "$file" ]; then
+
+              echo "ERROR: Missing $file"
+              exit 1
+
+            fi
+
+            echo ""
+            echo "$file:"
+            wc -l "$file"
+
+          done
+
+
+      # ======================================================
+      # GIT
+      # ======================================================
+
+      - name: Configure Git
+
+        shell: bash
+
+        run: |
+
+          git config \
+            user.name \
+            "github-actions[bot]"
+
+          git config \
+            user.email \
+            "41898282+github-actions[bot]@users.noreply.github.com"
+
+
+      # ======================================================
+      # SPRAWDZENIE ZMIAN
+      # ======================================================
+
+      - name: Check for changes
+
+        id: changes
+
+        shell: bash
+
+        run: |
+
+          git add \
+            gus_gaz_miesieczne_import.csv \
+            gus_gaz_roczne_import.csv \
+            gus_gaz_export_miesieczne.csv \
+            gus_gaz_export_roczne.csv
+
+
+          if git diff --cached --quiet; then
+
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+
+            echo "Brak nowych lub zmienionych danych GUS."
+
+          else
+
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+
+            echo "Dane GUS zostały zaktualizowane."
+
+            git diff \
+              --cached \
+              --stat
+
+          fi
+
+
+      # ======================================================
+      # COMMIT
+      # ======================================================
+
+      - name: Commit updated GUS data
+
+        if: steps.changes.outputs.changed == 'true'
+
+        shell: bash
+
+        run: |
+
+          git commit \
+            -m "Update monthly GUS gas data"
+
+
+      # ======================================================
+      # PUSH
+      # ======================================================
+
+      - name: Push updated GUS data
+
+        if: steps.changes.outputs.changed == 'true'
+
+        shell: bash
+
+        run: |
+
+          git pull \
+            --rebase \
+            origin \
+            main
+
+          git push \
+            origin \
+            main
