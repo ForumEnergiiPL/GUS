@@ -1,26 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-
-"""
-Miesięczna aktualizacja danych GUS DBW:
-- import gazu wg kraju pochodzenia
-- eksport gazu wg kraju
-- CN 27111100 LNG
-- CN 27112100 gaz ziemny w stanie gazowym
-
-Skrypt:
-1. czyta istniejące CSV z repo,
-2. sprawdza, których miesięcy/lat brakuje,
-3. dodatkowo odświeża ostatnie opublikowane okresy,
-4. pobiera tylko potrzebne okresy,
-5. zastępuje stare dane dla odświeżanych okresów,
-6. sprawdza duplikaty,
-7. zapisuje cztery CSV.
-
-Nie sumuje miesięcy do danych rocznych.
-Dane roczne są pobierane jako osobna oficjalna seria GUS.
-"""
-
 import calendar
 import csv
 import gzip
@@ -73,12 +50,13 @@ KODY_CN = {
 
 ROZMIAR_STRONY = 5000
 
-# Ile ostatnich miesięcy odświeżać nawet jeżeli już są w CSV.
-# Chroni przed późniejszymi korektami GUS.
-ODSWIEZ_OSTATNIE_MIESIACE = 2
+# 0 = dopisuj wyłącznie nowsze miesiące i lata.
+# Można ustawić 1, aby dodatkowo odświeżać ostatni zapisany okres.
+ODSWIEZ_OSTATNIE_MIESIACE = 0
+ODSWIEZ_OSTATNIE_LATA = 0
 
-# Ile ostatnich lat odświeżać.
-ODSWIEZ_OSTATNIE_LATA = 1
+# Pliki CSV są odczytywane z katalogu, w którym znajduje się skrypt.
+KATALOG_CSV = Path(__file__).resolve().parent
 
 
 # ============================================================
@@ -1821,285 +1799,127 @@ def sortuj(
 # AKTUALIZACJA JEDNEJ SERII
 # ============================================================
 
-def aktualizuj(
-    klient,
-    nazwa,
-    konfiguracja
-):
+def aktualizuj(klient, nazwa, konfiguracja):
 
-    print(
-        "\n"
-        "========================================"
-    )
+    print(f"\n========================================")
+    print(f"AKTUALIZACJA: {nazwa.upper()}")
+    print("========================================")
 
-    print(
-        f"AKTUALIZACJA: {nazwa.upper()}"
-    )
+    miesieczny_plik = KATALOG_CSV / konfiguracja["miesieczne"]
+    roczny_plik = KATALOG_CSV / konfiguracja["roczne"]
 
-    print(
-        "========================================"
-    )
+    for sciezka in (miesieczny_plik, roczny_plik):
+        if not sciezka.is_file():
+            raise RuntimeError(
+                f"Brak pliku {sciezka}. Przerwano, aby nie pobierać "
+                "historii od 2018 roku. Sprawdź, czy CSV są w repozytorium "
+                "i czy GitHub Actions zapisuje je po aktualizacji."
+            )
 
+    miesieczne = wczytaj_csv(miesieczny_plik)
+    roczne = wczytaj_csv(roczny_plik)
 
-    meta = pobierz_metadane(
-        klient,
-        konfiguracja
-    )
+    print(f"  Plik miesięczny: {miesieczny_plik}")
+    print(f"  Istniejące miesięczne: {len(miesieczne)} wierszy")
+    print(f"  Plik roczny: {roczny_plik}")
+    print(f"  Istniejące roczne: {len(roczne)} wierszy")
 
+    obecne_miesiace = okresy_miesieczne_w_csv(miesieczne)
+    obecne_lata = lata_w_csv(roczne)
 
-    miesieczny_plik = Path(
-        konfiguracja[
-            "miesieczne"
-        ]
-    )
-
-
-    roczny_plik = Path(
-        konfiguracja[
-            "roczne"
-        ]
-    )
-
-
-    miesieczne = wczytaj_csv(
-        miesieczny_plik
-    )
-
-
-    roczne = wczytaj_csv(
-        roczny_plik
-    )
-
-
-    print(
-        f"  Istniejące miesięczne: "
-        f"{len(miesieczne)} wierszy"
-    )
-
-    print(
-        f"  Istniejące roczne: "
-        f"{len(roczne)} wierszy"
-    )
-
-
-    # ========================================================
-    # MIESIĄCE
-    # ========================================================
-
-    wszystkie_miesiace = (
-        oczekiwane_miesiace(
-            meta
+    if not obecne_miesiace:
+        raise RuntimeError(
+            f"Plik {miesieczny_plik.name} nie ma poprawnych rekordów "
+            "rok/miesiac. Przerwano zamiast pobierać całą historię."
         )
-    )
 
-
-    obecne_miesiace = (
-        okresy_miesieczne_w_csv(
-            miesieczne
+    if not obecne_lata:
+        raise RuntimeError(
+            f"Plik {roczny_plik.name} nie ma poprawnych rekordów roku. "
+            "Przerwano zamiast pobierać całą historię."
         )
+
+    ostatni_miesiac = max(obecne_miesiace)
+    ostatni_rok = max(obecne_lata)
+
+    print(
+        f"  Ostatni zapisany miesiąc: "
+        f"{ostatni_miesiac[0]}-{ostatni_miesiac[1]:02d}"
     )
+    print(f"  Ostatni zapisany rok: {ostatni_rok}")
 
+    meta = pobierz_metadane(klient, konfiguracja)
 
-    brakujace_miesiace = [
-
-        okres
-
-        for okres
-        in wszystkie_miesiace
-
-        if okres
-        not in obecne_miesiace
+    # Pobieramy okresy WYŁĄCZNIE po najnowszym miesiącu w CSV.
+    wszystkie_miesiace = oczekiwane_miesiace(meta)
+    nowe_miesiace = [
+        okres for okres in wszystkie_miesiace
+        if okres > ostatni_miesiac
     ]
 
+    odswiez_miesiace = []
+    if ODSWIEZ_OSTATNIE_MIESIACE > 0:
+        dostepne = set(wszystkie_miesiace)
+        odswiez_miesiace = [
+            okres for okres in sorted(obecne_miesiace)
+            if okres in dostepne
+        ][-ODSWIEZ_OSTATNIE_MIESIACE:]
 
-    ostatnie = (
-        wszystkie_miesiace[
-            -ODSWIEZ_OSTATNIE_MIESIACE:
-        ]
-    )
+    do_pobrania_miesiace = sorted(set(nowe_miesiace + odswiez_miesiace))
+    print(f"  Nowszych miesięcy: {len(nowe_miesiace)}")
+    print(f"  Miesięcy do pobrania: {len(do_pobrania_miesiace)}")
 
-
-    do_pobrania_miesiace = sorted(
-        set(
-            brakujace_miesiace
-            + ostatnie
-        )
-    )
-
-
-    print(
-        f"  Miesięcy do sprawdzenia: "
-        f"{len(do_pobrania_miesiace)}"
-    )
-
-
+    zmieniono_miesieczne = False
     for rok, miesiac in do_pobrania_miesiace:
-
-        stan = pobierz_okres(
-            klient,
-            meta,
-            rok,
-            miesiac
-        )
-
-
+        stan = pobierz_okres(klient, meta, rok, miesiac)
         if stan is None:
-
             continue
 
+        nowe = generuj_wiersze(meta, stan)
+        miesieczne = wymien_miesiac(miesieczne, rok, miesiac, nowe)
+        zmieniono_miesieczne = True
 
-        nowe = generuj_wiersze(
-            meta,
-            stan
-        )
+    # Analogiczna zasada dla oficjalnych danych rocznych GUS.
+    wszystkie_lata = oczekiwane_lata(meta)
+    nowe_lata = [rok for rok in wszystkie_lata if rok > ostatni_rok]
 
+    odswiez_lata = []
+    if ODSWIEZ_OSTATNIE_LATA > 0:
+        dostepne = set(wszystkie_lata)
+        odswiez_lata = [
+            rok for rok in sorted(obecne_lata)
+            if rok in dostepne
+        ][-ODSWIEZ_OSTATNIE_LATA:]
 
-        miesieczne = wymien_miesiac(
-            miesieczne,
-            rok,
-            miesiac,
-            nowe
-        )
+    do_pobrania_lata = sorted(set(nowe_lata + odswiez_lata))
+    print(f"  Nowszych lat: {len(nowe_lata)}")
+    print(f"  Lat do pobrania: {len(do_pobrania_lata)}")
 
-
-    # ========================================================
-    # LATA
-    # ========================================================
-
-    wszystkie_lata = (
-        oczekiwane_lata(
-            meta
-        )
-    )
-
-
-    obecne_lata = (
-        lata_w_csv(
-            roczne
-        )
-    )
-
-
-    brakujace_lata = [
-
-        rok
-
-        for rok
-        in wszystkie_lata
-
-        if rok
-        not in obecne_lata
-    ]
-
-
-    ostatnie_lata = (
-        wszystkie_lata[
-            -ODSWIEZ_OSTATNIE_LATA:
-        ]
-    )
-
-
-    do_pobrania_lata = sorted(
-        set(
-            brakujace_lata
-            + ostatnie_lata
-        )
-    )
-
-
-    print(
-        f"  Lat do sprawdzenia: "
-        f"{len(do_pobrania_lata)}"
-    )
-
-
+    zmieniono_roczne = False
     for rok in do_pobrania_lata:
-
-        stan = pobierz_okres(
-            klient,
-            meta,
-            rok,
-            0
-        )
-
-
+        stan = pobierz_okres(klient, meta, rok, 0)
         if stan is None:
-
             continue
 
+        nowe = generuj_wiersze(meta, stan)
+        roczne = wymien_rok(roczne, rok, nowe)
+        zmieniono_roczne = True
 
-        nowe = generuj_wiersze(
-            meta,
-            stan
-        )
+    if zmieniono_miesieczne:
+        miesieczne = sortuj(miesieczne)
+        sprawdz_duplikaty(miesieczne, True)
+        zapisz_csv(miesieczny_plik, miesieczne)
+        print(f"  Zapisano {miesieczny_plik.name}")
+    else:
+        print(f"  Bez zmian: {miesieczny_plik.name}")
 
-
-        roczne = wymien_rok(
-            roczne,
-            rok,
-            nowe
-        )
-
-
-    # ========================================================
-    # DUPLIKATY
-    # ========================================================
-
-    miesieczne = sortuj(
-        miesieczne
-    )
-
-    roczne = sortuj(
-        roczne
-    )
-
-
-    sprawdz_duplikaty(
-        miesieczne,
-        True
-    )
-
-
-    sprawdz_duplikaty(
-        roczne,
-        False
-    )
-
-
-    print(
-        "  Duplikaty miesięczne: 0"
-    )
-
-    print(
-        "  Duplikaty roczne: 0"
-    )
-
-
-    # ========================================================
-    # ZAPIS
-    # ========================================================
-
-    zapisz_csv(
-        miesieczny_plik,
-        miesieczne
-    )
-
-
-    zapisz_csv(
-        roczny_plik,
-        roczne
-    )
-
-
-    print(
-        f"  Zapisano "
-        f"{miesieczny_plik}"
-    )
-
-    print(
-        f"  Zapisano "
-        f"{roczny_plik}"
-    )
+    if zmieniono_roczne:
+        roczne = sortuj(roczne)
+        sprawdz_duplikaty(roczne, False)
+        zapisz_csv(roczny_plik, roczne)
+        print(f"  Zapisano {roczny_plik.name}")
+    else:
+        print(f"  Bez zmian: {roczny_plik.name}")
 
 
 # ============================================================
