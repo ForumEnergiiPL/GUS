@@ -57,7 +57,7 @@ API = "https://api-dbw.stat.gov.pl/api/1.2.0/"
 # Nie usuwaj końcowego "=" jeżeli występuje.
 # ============================================================
 
-KLUCZ_API = "WKLEJ_TUTAJ_SWOJ_KLUCZ_API"
+KLUCZ_API = "rd0rSweA0HdXUfrNpJB5U6vypciTFcvBzuM8kRFarVU="
 
 
 # ============================================================
