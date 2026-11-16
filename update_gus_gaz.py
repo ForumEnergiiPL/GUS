@@ -14,32 +14,11 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 
-# ============================================================
-# API
-# ============================================================
-
 API = "https://api-dbw.stat.gov.pl/api/1.2.0/"
 
 
-# ============================================================
-# KLUCZ API
-# ============================================================
-#
-# WKLEJ TU SWÓJ KLUCZ GUS.
-# MA BYĆ BEZPOŚREDNIO W KODZIE.
-#
-# Przykład:
-# KLUCZ_API = "abc123xyz="
-#
-# Nie usuwaj końcowego "=" jeżeli występuje.
-# ============================================================
-
 KLUCZ_API = "rd0rSweA0HdXUfrNpJB5U6vypciTFcvBzuM8kRFarVU="
 
-
-# ============================================================
-# USTAWIENIA
-# ============================================================
 
 ROK_OD = 2018
 
@@ -59,10 +38,6 @@ ODSWIEZ_OSTATNIE_LATA = 0
 KATALOG_CSV = Path(__file__).resolve().parent
 
 
-# ============================================================
-# IMPORT / EKSPORT
-# ============================================================
-
 KONFIGURACJE = {
 
     "import": {
@@ -75,10 +50,10 @@ KONFIGURACJE = {
         "id_przekroju": 1434,
 
         "miesieczne":
-            "gus_gaz_miesieczne_import.csv",
+            "gus_gaz_miesieczne_import-towarow-wedlug-kraju-pochodzenia.csv",
 
         "roczne":
-            "gus_gaz_roczne_import.csv",
+            "gus_gaz_roczne_import-towarow-wedlug-kraju-pochodzenia.csv",
     },
 
     "export": {
@@ -102,9 +77,6 @@ KONFIGURACJE = {
 }
 
 
-# ============================================================
-# KOLUMNY CSV
-# ============================================================
 
 KOLUMNY = [
     "okres",
@@ -144,9 +116,6 @@ KATEGORIE_SPECJALNE = {
 }
 
 
-# ============================================================
-# API GUS
-# ============================================================
 
 class KlientGUS:
 
@@ -357,53 +326,56 @@ class KlientGUS:
             strona += 1
 
 
-# ============================================================
-# CSV
-# ============================================================
+
+def separator_csv(sciezka):
+    # Istniejące pliki w repozytorium używają różnych separatorów:
+    # import: przecinek; eksport: średnik.
+    with sciezka.open("r", encoding="utf-8-sig", newline="") as f:
+        naglowek = f.readline().lstrip("\ufeff").rstrip("\r\n")
+
+    for separator in (";", ","):
+        pola = next(csv.reader([naglowek], delimiter=separator), [])
+        if pola == KOLUMNY:
+            return separator
+
+    raise RuntimeError(
+        f"Nieznany układ kolumn w pliku {sciezka.name}. "
+        "Plik pozostawiono bez zmian. "
+        "Oczekiwano 19 kolumn CSV zgodnych ze skryptem."
+    )
+
 
 def wczytaj_csv(sciezka):
-
     if not sciezka.exists():
         return []
 
-    with sciezka.open(
-        "r",
-        encoding="utf-8-sig",
-        newline=""
-    ) as f:
+    separator = separator_csv(sciezka)
+    with sciezka.open("r", encoding="utf-8-sig", newline="") as f:
+        reader = csv.DictReader(f, delimiter=separator)
+        # Niektóre pliki historyczne zawierają podwójny znacznik BOM.
+        reader.fieldnames = [x.lstrip("\ufeff") for x in reader.fieldnames]
+        if reader.fieldnames != KOLUMNY:
+            raise RuntimeError(f"Niepoprawne nagłówki CSV: {sciezka.name}")
+        dane = list(reader)
 
-        return list(
-            csv.DictReader(
-                f,
-                delimiter=";"
+    for n, wiersz in enumerate(dane, start=2):
+        if None in wiersz or not wiersz.get("rok"):
+            raise RuntimeError(
+                f"Nieprawidłowy rekord w {sciezka.name}, wiersz {n}; "
+                "nie zapisano żadnych zmian."
             )
-        )
+    return dane
 
 
-def zapisz_csv(
-    sciezka,
-    wiersze
-):
-
-    tmp = sciezka.with_suffix(
-        ".tmp"
-    )
-
-    with tmp.open(
-        "w",
-        encoding="utf-8-sig",
-        newline=""
-    ) as f:
-
+def zapisz_csv(sciezka, wiersze):
+    separator = separator_csv(sciezka)
+    tmp = sciezka.with_suffix(".tmp")
+    with tmp.open("w", encoding="utf-8-sig", newline="") as f:
         writer = csv.DictWriter(
-            f,
-            fieldnames=KOLUMNY,
-            delimiter=";"
+            f, fieldnames=KOLUMNY, delimiter=separator
         )
-
         writer.writeheader()
         writer.writerows(wiersze)
-
     tmp.replace(sciezka)
 
 
@@ -1819,6 +1791,9 @@ def aktualizuj(klient, nazwa, konfiguracja):
     miesieczne = wczytaj_csv(miesieczny_plik)
     roczne = wczytaj_csv(roczny_plik)
 
+    print(f"  Separator miesięczny: {separator_csv(miesieczny_plik)!r}")
+    print(f"  Separator roczny: {separator_csv(roczny_plik)!r}")
+
     print(f"  Plik miesięczny: {miesieczny_plik}")
     print(f"  Istniejące miesięczne: {len(miesieczne)} wierszy")
     print(f"  Plik roczny: {roczny_plik}")
@@ -1979,11 +1954,11 @@ def main():
     )
 
     print(
-        "  gus_gaz_miesieczne_import.csv"
+        "  gus_gaz_miesieczne_import-towarow-wedlug-kraju-pochodzenia.csv"
     )
 
     print(
-        "  gus_gaz_roczne_import.csv"
+        "  gus_gaz_roczne_import-towarow-wedlug-kraju-pochodzenia.csv"
     )
 
     print(
